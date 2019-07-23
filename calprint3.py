@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
+import copy
 import re
 
 class Calprint:
@@ -10,15 +11,39 @@ class Calprint:
         
         inFile = open(file, "r")
         for line in inFile:
-            print(line),
             self.get_events(line)
         
-        print("length: ", len(self.events))
-        print("num_entries: ", self.num_entries)
+        self.events.sort(key = lambda event: event.start_time)
     
+    # This function takes a datetime object and returns formatted string with the days events
+    def get_events_for_day(self, date):
+        output = ""
+        
+        # get all events in the date in the self.events into list
+        list = []
+        date = date.date()
+        for event in self.events:
+            start_date = event.start_time.date()
+            if(start_date == date):
+                list.append(event)
+        
+        # store fomatted string into output
+        if(len(list) != 0):
+            start_date = list[0].start_time.strftime("%B %d, %Y (%a)")
+            output += start_date + '\n'
+            output += ('-' * len(start_date)) + '\n'
+            for i in range(0, len(list)):
+                output += list[i].__repr__()
+                if(i != len(list)-1):
+                    output+= '\n'
+        
+        return output
+    
+    # This method extracts information required from the input line and store them into the events
     def get_events(self, line):
         matchobj = re.match('DTSTART:(.*)', line)
         if(matchobj):
+            # extracts start_time in format "20190623T112000" and pass to function get_time to get a datetime object for start_time
             start_time = self.get_time(matchobj.group(1))
             self.events.append(Event())
             self.events[self.num_entries].start_time = start_time
@@ -46,18 +71,20 @@ class Calprint:
                 self.generate_events()
             self.num_entries = self.num_entries + 1
             
+    # This function generate all repetitive events recursively util util_time stored current event is reached
     def generate_events(self):
         next_week = self.events[self.num_entries].start_time + datetime.timedelta(weeks = 1)
         
         if(next_week < self.events[self.num_entries].util_time):
             
-            self.events.append(self.events[self.num_entries])
+            new_event = copy.deepcopy(self.events[self.num_entries])
+            new_event.start_time = next_week
+            self.events.append(new_event)
             self.num_entries = self.num_entries + 1
-            self.events[self.num_entries].start_time = next_week
             
-            print("event 0: ", self.events[0].start_time, self.events[0])
             self.generate_events()
     
+    # This function extract information from formatted string to create a datetime object
     def get_time(self, text):
         matchobj = re.match("(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})", text)
         if(matchobj):
@@ -74,13 +101,6 @@ class Event:
         self.util_time = util_time
         self.location = location
         self.summary = summary
-    
-    def __init__(self, event2):
-        self.start_time = event2.start_time
-        self.end_time = event2.end_time
-        self.util_time = event2.util_time
-        self.location = event2.locatoin
-        self.summary = event2.summary
         
     def __init__(self):
         self.start_time = None
@@ -88,25 +108,8 @@ class Event:
         self.util_time = None
         self.location = None
         self.summary = None
-        
-    def compareTo(self, event2):
-        if(self.start_time < event2.start_time):
-            return -1
-        elif(self.start_time == event2.start_time):
-            return 0
-        else:
-            return 1
     
     def __repr__(self):
         output = self.start_time.strftime("%-2I:%M %P") + " to " + self.end_time.strftime("%-2I:%M %P: ");
         output = output + self.summary + " [" + self.location + "]"
         return output
-
-def main():
-    calprint = Calprint("many.ics")
-    for event in calprint.events:
-        print("event: ", event.start_time, event)
-        
-    
-if __name__== "__main__":
-    main()
