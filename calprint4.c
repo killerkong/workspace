@@ -19,19 +19,12 @@ void print_date(node_t *node);
 void print_time(node_t *node);
 time_t *get_date(char *time_s);
 
-void ptime(time_t *time){
-    char *output = (char *) emalloc(sizeof(char) * 40);
-    strftime(output, 40, "%B %d, %Y (%a) %H %M", localtime(time));
-    free(output);
-}
-
 void print_events(node_t *events, time_t *start_date, time_t *end_date) {
     
     node_t *curr = events;
     node_t *prev = NULL;
     
     for(; curr != NULL; curr = curr->next){
-        //printf("summary: %s length: %ld\n", curr->val->summary, strlen(curr->val->summary));
         time_t *curr_date = get_date(curr->val->dtstart);
         
         if(difftime(*curr_date, *start_date) >=0 || difftime(*end_date, *curr_date) >= 0){
@@ -255,7 +248,6 @@ node_t *get_repetitive_events(node_t *events, node_t *repeat){
         strncpy(next_event->location, curr_event->location, strlen(curr_event->location));
         strncpy(next_event->summary, curr_event->summary, strlen(curr_event->summary));
         
-        //printf("next: %s\n", next_event->summary);
         node_t *next_node = new_node(next_event);
         events = add_inorder(events, next_node);
     
@@ -290,11 +282,9 @@ event_t *get_event(char *line, event_t *temp_event){
         free(rrule);
     }
     if(strncmp(line, "SUMMARY:", 8) == 0){
-        printf("line: %s\n", line);
         strncpy(temp_event->summary, line+8,strlen(line)-8-1);
         
         temp_event->summary = realloc(temp_event->summary, sizeof(char) * strlen(temp_event->summary)-1);
-        printf("sumamry: %s\n", temp_event->summary);
     }
     return temp_event;
 }
