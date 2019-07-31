@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
     free(line);
     free(start_date);
     free(end_date);
-    freeall(events);
+    //freeall(events);
     fclose(fp);
 /* 
  * Showing some simple usage of the linked-list routines.
